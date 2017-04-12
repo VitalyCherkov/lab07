@@ -1,0 +1,1 @@
+/usr/bin/c++   -g   CMakeFiles/lab07_01.dir/main.cpp.o CMakeFiles/lab07_01.dir/String.cpp.o  -o lab07_01 

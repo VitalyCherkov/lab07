@@ -21,6 +21,16 @@ String::String(const String &rhs):
     memcpy(data, rhs.data, len);
 }
 
+String::String(String &&rhs):
+    len(rhs.len),
+    max_len(rhs.max_len),
+    data(rhs.data)
+{
+    std::cout << "MS ";
+    rhs.data = nullptr;
+    rhs.len = rhs.max_len = 0;
+}
+
 String::String(const char *data, size_t len):
     len(len),
     max_len(len * 2),
@@ -39,7 +49,7 @@ String::String(const char *data):
     memcpy(this->data, data, len);
 }
 
-const String& String::operator=(const String &rhs) {
+const String &String::operator=(const String &rhs) {
     if(this == &rhs)
         return *this;
 
@@ -48,6 +58,11 @@ const String& String::operator=(const String &rhs) {
 
     return *this;
 }
+
+const String &String::operator=(String &&rhs) {
+    *this = std::move(rhs);
+}
+
 
 void String::push_back(char symbol) {
     if(len == max_len) {

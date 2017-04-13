@@ -14,10 +14,12 @@ class String {
 public:
     String();
     String(const String &rhs);
+    String(String &&rhs);
     String(const char* data);
     String(const char* data, size_t len);
 
     const String &operator=(const String &rhs);
+    const String &operator=(String &&rhs);
 
     ~String();
 

@@ -12,20 +12,21 @@
 #include <iostream>
 #include "node_t.h"
 
-#define TEMPLATE_SET template <typename T, typename Cmp_t>
-#define SET Set <T, Cmp_t>
+#define TEMPLATE_SET template <typename T, typename Cmp_t, typename Alloc>
+#define SET Set <T, Cmp_t, Alloc>
 
-template <typename T, typename Cmp_t>
+template <typename T, typename Cmp_t, typename Alloc>
 class iterator_t;
 
-template <typename T, typename Cmp_t = std::less<T>>
+template <typename T, typename Cmp_t = std::less <T>,
+        typename Alloc = std::allocator <T>>
 class Set {
     typedef std::shared_ptr <node_t <T>> pnode_t;
 
 public: // Итераторы
 
-    typedef iterator_t <T, Cmp_t> iterator;
-    typedef iterator_t <const T, Cmp_t> const_iterator;
+    typedef iterator_t <T, Cmp_t, Alloc> iterator;
+    typedef iterator_t <const T, Cmp_t, Alloc> const_iterator;
 
     iterator begin();
     iterator end();
@@ -35,24 +36,40 @@ public: // Итераторы
 
 public:
     Set();
-    Set(const Set<T, Cmp_t> &rhs);
+    Set(const Set &rhs);
     Set(const std::initializer_list <T>  &l);
-    const Set <T, Cmp_t> &operator=(const Set<T, Cmp_t> &rhs);
+    Set(Set &&rhs);
+    const SET &operator=(const SET &rhs);
 
 
     size_t get_size() const;
     void insert(const T &new_data);
     void erase(const T &key);
+    void clear();
 
+/*
+public:
+    static void* operator new(size_t s, Alloc& allct) {
+        return allct.allocate(s);
+    }
+    static void* operator new(size_t s, Alloc* allct) {
+        return allct->allocate(s);
+    }
+
+    static void operator delete(void*, size_t) { } // *1
+    static void operator delete(void*, Alloc*) { }
+    static void operator delete(void*, Alloc&) { }
+private:
+    static void* operator new(size_t s);
+*/
 
 private:
-
-
     size_t size;
     pnode_t head;
     Cmp_t comparator;
+    Alloc allocator;
 
-    pnode_t &copy_tree(const pnode_t &from,
+    pnode_t copy_tree(const pnode_t &from,
                        const pnode_t &parent = nullptr);
 
     void insert(pnode_t &new_node, pnode_t &head);
@@ -67,26 +84,48 @@ TEMPLATE_SET
 SET::Set():
         head(nullptr),
         size(0),
-        comparator()
+        comparator(),
+        allocator()
 {}
 
 TEMPLATE_SET
 SET::Set(const Set &rhs):
         size(rhs.size),
-        comparator(rhs.comparator),
-        head(nullptr)
+        comparator(),
+        head(nullptr),
+        allocator()
 {
     head = copy_tree(rhs.head);
+    std::cout << "copy" << std::endl;
 }
 
 TEMPLATE_SET
 SET::Set(const std::initializer_list<T> &l):
     size(0),
     comparator(),
+    allocator(),
     head(nullptr)
 {
-    for(auto new_data: l)
-        insert(new_data);
+    auto it = l.begin();
+    while (it != l.end()){
+        insert(*it);
+        std::cout << ".";
+        it++;
+    }
+    std::cout << "initializer" << std::endl;
+}
+
+TEMPLATE_SET
+SET::Set(Set &&rhs):
+    size(rhs.size),
+    comparator(),
+    head(rhs.head),
+    allocator()
+{
+    rhs.size = 0;
+    rhs.head = pnode_t(nullptr);
+
+    std::cout << "move" << std::endl;
 }
 
 TEMPLATE_SET
@@ -114,7 +153,7 @@ size_t SET::get_size() const {
 // -------------------------------------------------------
 
 TEMPLATE_SET
-typename SET::pnode_t &SET::copy_tree(const Set::pnode_t &from,
+typename SET::pnode_t SET::copy_tree(const Set::pnode_t &from,
                         const Set::pnode_t &parent) {
     pnode_t new_node(from);
 
@@ -201,7 +240,7 @@ typename SET::iterator SET::find(const T &key) {
 }
 
 // -------------------------------------------------------
-//  Удаление элемента
+//  Удаление элемента и очистка класса
 // -------------------------------------------------------
 
 TEMPLATE_SET
@@ -249,6 +288,12 @@ void SET::erase(const T &key) {
     size--;
 }
 
+TEMPLATE_SET
+void SET::clear() {
+    size = 0;
+    head = pnode_t(nullptr);
+}
+
 // -------------------------------------------------------
 //  Методы итераторные класса Set
 // -------------------------------------------------------
@@ -293,10 +338,10 @@ typename SET::const_iterator SET::begin() const {
 // -------------------------------------------------------
 // -------------------------------------------------------
 
-#define TEMPLATE_ITERATOR template <typename T, typename Cmp_t>
-#define ITERATOR iterator_t <T, Cmp_t>
+#define TEMPLATE_ITERATOR template <typename T, typename Cmp_t, typename Alloc>
+#define ITERATOR iterator_t <T, Cmp_t, Alloc>
 
-template <typename T, typename Cmp_t>
+TEMPLATE_ITERATOR
 class iterator_t: public std::iterator<std::input_iterator_tag, T> {
     typedef std::shared_ptr <node_t <T>> pnode_t;
     friend class Set <T, Cmp_t>;
